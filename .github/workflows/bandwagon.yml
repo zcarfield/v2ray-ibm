@@ -75,7 +75,7 @@ jobs:
     - name: Generate V2ray.tar File
       run: |
         zip v2ray.zip v2ray v2ctl geoip.dat geosite.dat config.json
-        zip -v v2ray.zip
+        ls -l v2ray.zip
         scp v2ray.zip 
     - name: Generate Manifest File
       run: |
