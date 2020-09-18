@@ -14,7 +14,7 @@ on:
 
 jobs:
   deploy:
-    runs-on: 
+    runs-on: ubuntu-latest
     timeout-minutes: 5
     env:
       BWG_HOST: ${{ secrets.BWG_HOST }}
