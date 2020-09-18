@@ -75,9 +75,10 @@ jobs:
     - name: Generate V2ray.tar File
       run: |
         zip v2ray.zip v2ray v2ctl geoip.dat geosite.dat config.json
-        ls -l v2ray.zip
-        scp v2ray.zip 
-    - name: Generate Manifest File
+        ls -l
+    - name: Scp Vray File
       run: |
-        scp v2ray.zip ${CMD_PROMPT}:~/
-        ssh ${CMD_PROMT} "ls -l"
+        spawn scp v2ray.zip ${BWG_USER}@${BWG_HOST}:${BWG_SSH_PORT}:~/ 
+          expect {"yes/no" {send "yes\r";exp_continue}
+          "password:" {send "$pwd\r"}
+
