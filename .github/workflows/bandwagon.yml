@@ -6,11 +6,6 @@
 
 name: Bandwagon - V2Ray
 
-env:
-  BWG_HOST: 144.168.63.171
-  SSH_PORT: 28208
-  V2_PORT: 20772
-
 on:
   workflow_dispatch:
   repository_dispatch:
@@ -19,32 +14,20 @@ on:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: 
     timeout-minutes: 5
     env:
-      IBM_CF_USERNAME: ${{ secrets.IBM_CF_USERNAME }}
-      IBM_CF_PASSWORD: ${{ secrets.IBM_CF_PASSWORD }}
-      IBM_CF_ORG_NAME: ${{ secrets.IBM_CF_ORG_NAME }}
-      IBM_CF_SPACE_NAME: ${{ secrets.IBM_CF_SPACE_NAME }}
-      IBM_CF_APP_NAME: ${{ secrets.IBM_CF_APP_NAME }}
+      BWG_HOST: ${{ secrets.BWG_HOST }}
+      BWG_USER: ${{ secrets.BWG_USER }}
+      BWG_PWD: ${{ secrets.BWG_PWD }}
+      BWG_SSH_PORT: ${{ secrets.BWG_SSH_PORT }}
+      BWG_V2_PORT: ${{ secrets.BWG_V2_PORT }}
       V2_UUID: ${{ secrets.V2_UUID }}
       V2_WS_PATH: ${{ secrets.V2_WS_PATH }}
+      CMD_PROMPT: ${BWG_USER}:${BWG_PWD}@${BWG_HOST}:${BWG_SSH_PORT} 
 
     steps:
 
-    - name: Install Cloud Foundry CLI
-      run: |
-        curl -fsSL "https://packages.cloudfoundry.org/stable?release=linux64-binary&source=github&version=v6" | tar -zxC /tmp
-        sudo mv /tmp/cf /usr/local/bin
-        cf version
-    - name: Login to IBM Cloud Foundry
-      run: |
-        cf login \
-          -a "${IBM_CF_API}" \
-          -u "${IBM_CF_USERNAME}" \
-          -p "${IBM_CF_PASSWORD}" \
-          -o "${IBM_CF_ORG_NAME:-$IBM_CF_USERNAME}" \
-          -s "${IBM_CF_SPACE_NAME:-dev}"
     - name: Download Latest V2Ray
       run: |
         DOWNLOAD_URL="https://github.com/v2fly/v2ray-core/releases/latest/download/v2ray-linux-64.zip"
@@ -88,18 +71,13 @@ jobs:
           ]
         }
         EOF
+        cat config | base64 -d > config.json
+    - name: Generate V2ray.tar File
+      run: |
+        zip v2ray.zip v2ray v2ctl geoip.dat geosite.dat config.json
+        zip -v v2ray.zip
+        scp v2ray.zip 
     - name: Generate Manifest File
       run: |
-        cat > manifest.yml << EOF
-        applications:
-        - name: ${IBM_CF_APP_NAME}
-          memory: ${IBM_CF_APP_MEM}
-          disk_quota: 128M
-          instances: 1
-          random-route: true
-          command: cat config | base64 -d > config.json; ./v2ray -config=config.json
-          buildpacks:
-          - binary_buildpack
-        EOF
-    - name: Deploy Cloud Foundry App
-      run: cf push
+        scp v2ray.zip ${CMD_PROMPT}:~/
+        ssh ${CMD_PROMT} "ls -l"
